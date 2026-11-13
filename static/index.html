@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>iBatcher</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --panel: #ffffff;
+      --ink: #182234;
+      --muted: #667085;
+      --line: #dfe5ee;
+      --brand: #3157d5;
+      --brand-dark: #2343ad;
+      --soft: #eef2ff;
+      --danger: #c92a2a;
+      --danger-soft: #fff1f1;
+      --success: #16835b;
+      --shadow: 0 12px 36px rgba(26, 39, 68, .08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 14px/1.45 Inter, "Segoe UI", Arial, sans-serif;
+    }
+    button, input, select, textarea { font: inherit; }
+    .topbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(255,255,255,.93);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 36px; height: 36px; display: grid; place-items: center;
+      border-radius: 11px;
+      box-shadow: 0 6px 18px rgba(49,87,213,.28);
+    }
+    .brand h1 { margin: 0; font-size: 17px; }
+    .brand small { color: var(--muted); }
+    .top-actions { display: flex; gap: 8px; }
+    .layout {
+      width: min(1480px, calc(100% - 32px));
+      margin: 22px auto 40px;
+      display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 18px;
+    }
+    .main { display: grid; gap: 18px; min-width: 0; }
+    .card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; padding: 18px 20px 10px;
+    }
+    .card-head h2 { margin: 0; font-size: 16px; }
+    .card-head p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .card-body { padding: 12px 20px 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .field { min-width: 0; }
+    label { display: block; margin: 0 0 6px; color: #344054; font-weight: 600; font-size: 12px; }
+    input, select, textarea {
+      width: 100%; border: 1px solid #ccd5e2; border-radius: 9px;
+      padding: 9px 11px; color: var(--ink); background: white;
+      outline: none; transition: border .15s, box-shadow .15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #6f8be5; box-shadow: 0 0 0 3px rgba(49,87,213,.10);
+    }
+    input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--brand); }
+    textarea { resize: vertical; }
+    .code {
+      min-height: 290px; tab-size: 2;
+      font: 13px/1.55 Consolas, "Cascadia Code", monospace;
+      color: #1c2a3f; background: #f9fbfe;
+    }
+    .headers { min-height: 84px; font: 12px/1.45 Consolas, monospace; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .row > * { min-width: 0; }
+    .grow { flex: 1; }
+    .check { display: flex; align-items: center; gap: 8px; font-weight: 500; margin: 0; }
+    .btn {
+      width: auto; border: 1px solid #cbd5e2; border-radius: 9px;
+      padding: 9px 13px; cursor: pointer; background: white;
+      color: #27364c; font-weight: 650; transition: .15s;
+    }
+    .btn:hover { border-color: #9eacc0; background: #f8fafc; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn.primary { background: var(--brand); border-color: var(--brand); color: white; }
+    .btn.primary:hover { background: var(--brand-dark); }
+    .btn.danger { color: var(--danger); border-color: #efb8b8; background: var(--danger-soft); }
+    .btn.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+    .btn.small { padding: 6px 9px; font-size: 12px; }
+    .profilebar { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; align-items: end; }
+    .dynamic-table { display: grid; gap: 8px; }
+    .dynamic-head, .dynamic-row {
+      display: grid; grid-template-columns: minmax(150px,1.4fr) minmax(150px,1fr) 1fr 42px;
+      gap: 8px; align-items: center;
+    }
+    .dynamic-head { color: var(--muted); font-size: 11px; font-weight: 700; padding: 0 4px; }
+    .dynamic-row { padding: 9px; background: #f8faff; border: 1px solid #e6ebf4; border-radius: 11px; }
+    .dynamic-row input, .dynamic-row select { padding: 8px; }
+    .empty { padding: 22px; text-align: center; color: var(--muted); border: 1px dashed #ccd5e2; border-radius: 11px; }
+    .aside { position: relative; }
+    .run-card { position: sticky; top: 82px; overflow: hidden; }
+    .run-body { padding: 18px; }
+    .run-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .switches { display: grid; gap: 10px; margin: 14px 0; }
+    .action-stack { display: grid; gap: 9px; margin-top: 15px; }
+    .action-stack .btn { width: 100%; padding: 11px; }
+    .progress-wrap { margin: 18px 0 8px; }
+    .progress {
+      height: 10px; overflow: hidden; background: #e8edf5; border-radius: 999px;
+    }
+    .progress > div { height: 100%; width: 0; background: linear-gradient(90deg,#3157d5,#7658e8); transition: width .3s; }
+    .progress-title { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 7px; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 14px; }
+    .metric { padding: 10px 8px; text-align: center; background: #f7f9fc; border-radius: 10px; }
+    .metric strong { display: block; font-size: 15px; }
+    .metric span { color: var(--muted); font-size: 10px; }
+    .status { margin-top: 12px; padding: 10px 11px; border-radius: 10px; background: var(--soft); color: #314a9c; }
+    .status.error { background: var(--danger-soft); color: var(--danger); }
+    .last-error { margin-top: 9px; color: var(--danger); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    .last-response { margin-top: 9px; color: var(--success); font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+    .preflight-details { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+    .preflight-details summary { cursor: pointer; font-weight: 650; }
+    .preflight-details pre { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #f7f9fc; padding: 9px; border-radius: 8px; font: 11px/1.45 Consolas, monospace; }
+    .hint { color: var(--muted); font-size: 11px; margin-top: 5px; }
+    .notice { padding: 10px 12px; border-radius: 10px; background: #fff8e6; color: #7a5900; font-size: 12px; }
+    .hidden { display: none !important; }
+    .toast {
+      position: fixed; right: 20px; bottom: 20px; z-index: 30;
+      max-width: 430px; padding: 12px 15px; color: white; background: #26364e;
+      border-radius: 11px; box-shadow: 0 15px 40px rgba(0,0,0,.2);
+      opacity: 0; transform: translateY(10px); pointer-events: none; transition: .2s;
+    }
+    .toast.show { opacity: 1; transform: none; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .run-card { position: static; }
+    }
+    @media (max-width: 700px) {
+      .grid-2, .grid-3, .profilebar { grid-template-columns: 1fr; }
+      .dynamic-head { display: none; }
+      .dynamic-row { grid-template-columns: 1fr; }
+      .topbar { padding: 12px; }
+      .layout { width: min(100% - 16px, 1480px); margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="/logo.svg" alt="iBatcher">
+      <div><h1>iBatcher</h1><small>Универсальный массовый запуск REST-запросов · v__APP_VERSION__</small></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn small" id="openReports">Отчёты</button>
+      <button class="btn ghost small" id="shutdown">Закрыть программу</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main class="main">
+      <section class="card">
+        <div class="card-head"><div><h2>Профиль</h2><p>Сохраните настройки документа без паролей</p></div></div>
+        <div class="card-body profilebar">
+          <div class="field"><label>Сохранённые профили</label><select id="profileSelect"><option value="">Новый профиль</option></select></div>
+          <div class="field"><label>Название</label><input id="profileName" placeholder="Например: Свободный платёж"></div>
+          <button class="btn" id="saveProfile">Сохранить</button>
+          <button class="btn" id="exportProfile">Экспорт JSON</button>
+          <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+          <button class="btn small" id="importProfile" style="grid-column: 1 / -1; justify-self:start">Импортировать профиль</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div><h2>1. Вход в систему</h2><p>Необязательный запрос, выполняется один раз перед прогоном</p></div>
+          <label class="check"><input type="checkbox" id="loginEnabled" checked> Использовать login</label>
+        </div>
+        <div class="card-body" id="loginFields">
+          <div class="row" style="margin-bottom:12px">
+            <div style="width:110px"><label>Метод</label><select id="loginMethod"><option>POST</option><option>GET</option><option>PUT</option></select></div>
+            <div class="grow"><label>Login URL</label><input id="loginUrl" placeholder="https://stand.example.ru/rest/login"></div>
+          </div>
+          <div class="grid-2" style="margin-bottom:12px">
+            <div class="field"><label>Basic Auth — логин</label><input id="loginUsername" autocomplete="off"></div>
+            <div class="field"><label>Basic Auth — пароль</label><input id="loginPassword" type="password" autocomplete="new-password"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Заголовки login, JSON</label><textarea class="headers" id="loginHeaders">{}</textarea></div>
+            <div class="field"><label>Тело login (необязательно)</label><textarea class="headers" id="loginBody"></textarea></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><div><h2>2. Основной запрос</h2><p>Запрос, который будет повторён указанное количество раз</p></div></div>
+        <div class="card-body">
+          <div class="row" style="margin-bottom:12px">
+            <div style="width:110px"><label>Метод</label><select id="requestMethod"><option>POST</option><option>PUT</option><option>PATCH</option><option>GET</option><option>DELETE</option></select></div>
+            <div class="grow"><label>URL</label><input id="requestUrl" placeholder="https://stand.example.ru/rest/document/create"></div>
+          </div>
+          <div class="grid-2" style="margin-bottom:12px">
+            <div class="field"><label>Basic Auth основного запроса (необязательно)</label><input id="requestUsername" placeholder="Логин"></div>
+            <div class="field"><label>&nbsp;</label><input id="requestPassword" type="password" placeholder="Пароль"></div>
+          </div>
+          <div class="field" style="margin-bottom:12px"><label>Заголовки, JSON</label><textarea class="headers" id="requestHeaders">{"Content-Type":"application/json"}</textarea></div>
+          <div class="row" style="justify-content:space-between;margin-bottom:6px">
+            <label style="margin:0">JSON-тело</label>
+            <button class="btn small" id="formatBody">Форматировать JSON</button>
+          </div>
+          <textarea class="code" id="requestBody" spellcheck="false"></textarea>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div><h2>3. Динамические поля</h2><p>Оставьте список пустым, если тело всегда одинаковое</p></div>
+          <button class="btn small" id="addDynamic">+ Добавить поле</button>
+        </div>
+        <div class="card-body">
+          <div class="dynamic-table" id="dynamicTable">
+            <div class="dynamic-head"><span>Путь в JSON</span><span>Генератор</span><span>Параметр</span><span></span></div>
+            <div id="dynamicRows"></div>
+            <div class="empty" id="dynamicEmpty">Динамических полей нет — JSON будет отправляться без изменений.</div>
+          </div>
+          <div class="hint">Примеры путей: <code>$.sbpFpMessageId</code>, <code>$.payment.operationId</code>, <code>$.items[0].id</code></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div><h2>4. Проверка ответа</h2><p>Значения подходят для стандартных ответов создания документов ДБО</p></div>
+        </div>
+        <div class="card-body">
+          <div class="grid-3">
+            <div class="field"><label>Поле ошибки</label><input id="errorPath" value="$.errorCode" placeholder="$.errorCode"></div>
+            <div class="field"><label>Текст ошибки</label><input id="errorTextPath" value="$.errorText" placeholder="$.errorText"></div>
+            <div class="field"><label>Подтверждение успеха</label><input id="successPath" value="$.id" placeholder="$.id"></div>
+          </div>
+          <div class="hint">При наличии поля ошибки ответ считается ошибочным даже с HTTP 200. Очистите «Подтверждение успеха», если для API достаточно статуса HTTP 2xx.</div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="aside">
+      <section class="card run-card">
+        <div class="card-head"><div><h2>Запуск</h2><p>Сначала рекомендуется один проверочный запрос</p></div></div>
+        <div class="run-body">
+          <div class="run-grid">
+            <div class="field"><label>Количество</label><input id="count" type="number" min="1" value="100"></div>
+            <div class="field"><label>Потоки</label><input id="workers" type="number" min="1" max="256" value="1"></div>
+            <div class="field"><label>Таймаут, сек.</label><input id="timeout" type="number" min="1" value="60"></div>
+            <div class="field"><label>Попытки</label><input id="attempts" type="number" min="1" max="20" value="3"></div>
+          </div>
+          <div class="switches">
+            <label class="check"><input type="checkbox" id="preflight" checked> Проверить первый запрос</label>
+            <label class="check"><input type="checkbox" id="verifyTls" checked> Проверять HTTPS-сертификат</label>
+            <label class="check"><input type="checkbox" id="stopOnError"> Остановиться при первой ошибке</label>
+          </div>
+          <div class="notice">Проверочный запрос создаёт реальный документ и входит в общее количество.</div>
+
+          <div class="action-stack">
+            <button class="btn" id="testOne">Проверить 1 запрос</button>
+            <button class="btn primary" id="start">Запустить прогон</button>
+            <button class="btn danger" id="stop" disabled>Пауза</button>
+          </div>
+          <div class="notice hidden" id="resumeBox" style="margin-top:10px">
+            <div id="resumeInfo"></div>
+            <button class="btn" id="resume" style="margin-top:8px;width:100%">Продолжить прогон</button>
+            <div class="hint">Для нового входа укажите пароль в разделе «Вход в систему». Настройки прогона берутся из сохранённого состояния.</div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-title"><span id="progressLabel">0 / 0</span><span id="progressPercent">0%</span></div>
+            <div class="progress"><div id="progressBar"></div></div>
+          </div>
+          <div class="metrics">
+            <div class="metric"><strong id="successMetric">0</strong><span>успешно</span></div>
+            <div class="metric"><strong id="failedMetric">0</strong><span>ошибок</span></div>
+            <div class="metric"><strong id="unknownMetric">0</strong><span>неизвестно</span></div>
+            <div class="metric"><strong id="rateMetric">0</strong><span>запр./сек</span></div>
+          </div>
+          <div class="status" id="status">Готов к запуску</div>
+          <div class="last-response hidden" id="lastResponse"></div>
+          <div class="last-error hidden" id="lastError"></div>
+          <details class="preflight-details hidden" id="preflightDetails">
+            <summary>Проверочный запрос и ответ</summary>
+            <div class="hint" id="preflightSummary"></div>
+            <label>Отправленный JSON</label><pre id="preflightRequest"></pre>
+            <label>Ответ сервера</label><pre id="preflightResponse"></pre>
+          </details>
+          <div class="hint" id="reportHint"></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const TOKEN = "__APP_TOKEN__";
+    const $ = id => document.getElementById(id);
+    let currentStatus = { running: false };
+    let resumableRun = null;
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: { "X-App-Token": TOKEN, "Content-Type": "application/json", ...(options.headers || {}) }
+      });
+      let data = {};
+      try { data = await response.json(); } catch (_) {}
+      if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      return data;
+    }
+
+    function toast(text) {
+      const el = $("toast"); el.textContent = text; el.classList.add("show");
+      clearTimeout(el.timer); el.timer = setTimeout(() => el.classList.remove("show"), 3200);
+    }
+
+    function parseObject(id, label) {
+      const text = $(id).value.trim();
+      if (!text) return {};
+      const value = JSON.parse(text);
+      if (!value || Array.isArray(value) || typeof value !== "object") throw new Error(`${label}: нужен JSON-объект`);
+      return value;
+    }
+
+    function dynamicRules() {
+      return [...document.querySelectorAll(".dynamic-row")].map(row => ({
+        path: row.querySelector(".dyn-path").value.trim(),
+        generator: row.querySelector(".dyn-generator").value,
+        prefix: row.querySelector(".dyn-param").dataset.mode === "prefix" ? row.querySelector(".dyn-param").value : "",
+        start: row.querySelector(".dyn-param").dataset.mode === "start" ? Number(row.querySelector(".dyn-param").value || 1) : 1,
+        padding: Number(row.querySelector(".dyn-padding")?.value || 0),
+        length: row.querySelector(".dyn-param").dataset.mode === "length" ? Number(row.querySelector(".dyn-param").value || 16) : 16
+      }));
+    }
+
+    function configFromForm() {
+      JSON.parse($("requestBody").value);
+      return {
+        profileName: $("profileName").value.trim() || "Новый профиль",
+        login: {
+          enabled: $("loginEnabled").checked,
+          method: $("loginMethod").value,
+          url: $("loginUrl").value.trim(),
+          username: $("loginUsername").value,
+          password: $("loginPassword").value,
+          headers: parseObject("loginHeaders", "Заголовки login"),
+          body: $("loginBody").value
+        },
+        request: {
+          method: $("requestMethod").value,
+          url: $("requestUrl").value.trim(),
+          username: $("requestUsername").value,
+          password: $("requestPassword").value,
+          headers: parseObject("requestHeaders", "Заголовки запроса"),
+          body: $("requestBody").value
+        },
+        dynamicFields: dynamicRules(),
+        responseValidation: {
+          errorPath: $("errorPath").value.trim(),
+          errorTextPath: $("errorTextPath").value.trim(),
+          successPath: $("successPath").value.trim()
+        },
+        run: {
+          count: Number($("count").value), workers: Number($("workers").value),
+          timeout: Number($("timeout").value), maxAttempts: Number($("attempts").value),
+          verifyTls: $("verifyTls").checked, preflight: $("preflight").checked,
+          stopOnError: $("stopOnError").checked
+        }
+      };
+    }
+
+    function fillForm(config) {
+      const login = config.login || {}, request = config.request || {}, run = config.run || {};
+      const validation = config.responseValidation || {};
+      $("profileName").value = config.profileName || "Новый профиль";
+      $("loginEnabled").checked = login.enabled !== false;
+      $("loginMethod").value = login.method || "POST"; $("loginUrl").value = login.url || "";
+      $("loginUsername").value = login.username || ""; $("loginPassword").value = "";
+      $("loginHeaders").value = JSON.stringify(login.headers || {}, null, 2); $("loginBody").value = login.body || "";
+      $("requestMethod").value = request.method || "POST"; $("requestUrl").value = request.url || "";
+      $("requestUsername").value = request.username || ""; $("requestPassword").value = "";
+      $("requestHeaders").value = JSON.stringify(request.headers || {"Content-Type":"application/json"}, null, 2);
+      $("requestBody").value = request.body || "{}";
+      $("errorPath").value = validation.errorPath ?? "$.errorCode";
+      $("errorTextPath").value = validation.errorTextPath ?? "$.errorText";
+      $("successPath").value = validation.successPath ?? "$.id";
+      $("count").value = run.count || 1; $("workers").value = run.workers || 1;
+      $("timeout").value = run.timeout || 60; $("attempts").value = run.maxAttempts || 3;
+      $("verifyTls").checked = run.verifyTls !== false; $("preflight").checked = run.preflight !== false;
+      $("stopOnError").checked = !!run.stopOnError;
+      $("dynamicRows").innerHTML = "";
+      (config.dynamicFields || []).forEach(addDynamicRow);
+      refreshDynamicEmpty(); toggleLogin();
+    }
+
+    function addDynamicRow(rule = {}) {
+      const row = document.createElement("div"); row.className = "dynamic-row";
+      row.innerHTML = `
+        <input class="dyn-path" placeholder="$.externalId" value="${escapeHtml(rule.path || "")}">
+        <select class="dyn-generator">
+          <option value="uuid32_upper">UUID, 32, CAPS</option><option value="uuid32_lower">UUID, 32, lower</option>
+          <option value="uuid36">UUID с дефисами</option><option value="counter">Счётчик-строка</option>
+          <option value="integer_counter">Счётчик-число</option><option value="timestamp_iso">Текущее время ISO</option>
+          <option value="random_alnum">Случайная строка</option>
+        </select>
+        <div class="row"><input class="dyn-param" placeholder="Не требуется"><input class="dyn-padding hidden" type="number" min="0" placeholder="0" style="width:72px"></div>
+        <button class="btn danger small dyn-remove">×</button>`;
+      row.querySelector(".dyn-generator").value = rule.generator || "uuid32_upper";
+      row.querySelector(".dyn-remove").onclick = () => { row.remove(); refreshDynamicEmpty(); };
+      row.querySelector(".dyn-generator").onchange = () => updateDynamicParam(row, rule);
+      $("dynamicRows").appendChild(row); updateDynamicParam(row, rule); refreshDynamicEmpty();
+    }
+
+    function updateDynamicParam(row, rule = {}) {
+      const type = row.querySelector(".dyn-generator").value, input = row.querySelector(".dyn-param"), padding = row.querySelector(".dyn-padding");
+      padding.classList.add("hidden"); input.disabled = false; input.dataset.mode = "";
+      if (["uuid32_upper","uuid32_lower","uuid36","timestamp_iso"].includes(type)) { input.value = ""; input.placeholder = "Не требуется"; input.disabled = true; }
+      if (type === "random_alnum") { input.dataset.mode = "length"; input.placeholder = "Длина"; input.value = rule.length || input.value || 16; }
+      if (type === "integer_counter") { input.dataset.mode = "start"; input.placeholder = "Начало"; input.value = rule.start || input.value || 1; }
+      if (type === "counter") { input.dataset.mode = "prefix"; input.placeholder = "Префикс"; input.value = rule.prefix ?? input.value; padding.classList.remove("hidden"); padding.value = rule.padding || 0; padding.title = "Дополнение нулями"; }
+    }
+
+    function refreshDynamicEmpty() { $("dynamicEmpty").classList.toggle("hidden", !!$("dynamicRows").children.length); }
+    function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
+    function toggleLogin() { $("loginFields").classList.toggle("hidden", !$("loginEnabled").checked); }
+
+    async function startRun(testOnly = false) {
+      if (currentStatus.running) return;
+      try {
+        const config = configFromForm();
+        if (testOnly) { config.run.count = 1; config.run.workers = 1; config.run.preflight = true; }
+        else if (config.run.count >= 10000 && !confirm(`Будет отправлено ${config.run.count.toLocaleString("ru-RU")} запросов. Продолжить?`)) return;
+        await api("/api/start", {method:"POST", body:JSON.stringify(config)});
+        toast(testOnly ? "Запущен один проверочный запрос" : "Прогон запущен");
+      } catch (error) { toast(error.message); }
+    }
+
+    function renderStatus(value) {
+      const wasRunning = currentStatus.running;
+      currentStatus = value;
+      const total = value.total || 0, processed = value.processed || 0, percent = value.percent || 0;
+      $("progressLabel").textContent = `${processed.toLocaleString("ru-RU")} / ${total.toLocaleString("ru-RU")}`;
+      $("progressPercent").textContent = `${percent.toFixed(1)}%`; $("progressBar").style.width = `${percent}%`;
+      $("successMetric").textContent = (value.success || 0).toLocaleString("ru-RU");
+      $("failedMetric").textContent = (value.failed || 0).toLocaleString("ru-RU");
+      $("unknownMetric").textContent = (value.unknown || 0).toLocaleString("ru-RU");
+      $("rateMetric").textContent = (value.rate || 0).toFixed(1);
+      $("status").textContent = value.message || ""; $("status").classList.toggle("error", value.phase === "failed");
+      $("lastResponse").textContent = value.lastResponse || ""; $("lastResponse").classList.toggle("hidden", !value.lastResponse);
+      $("lastError").textContent = value.lastError || ""; $("lastError").classList.toggle("hidden", !value.lastError);
+      const details = value.preflightDetails;
+      $("preflightDetails").classList.toggle("hidden", !details);
+      if (details) {
+        $("preflightSummary").textContent = `HTTP ${details.status || "—"} · ${details.summary || (details.ok ? "Успешно" : "Ошибка")}`;
+        $("preflightRequest").textContent = details.requestBody || "(пустое тело)";
+        $("preflightResponse").textContent = details.responseBody || "(пустой ответ)";
+      }
+      $("reportHint").textContent = value.reportPath ? `Отчёт: ${value.reportPath}` : "";
+      $("start").disabled = value.running; $("testOne").disabled = value.running; $("stop").disabled = !value.running;
+      $("resume").disabled = value.running || !resumableRun?.remaining;
+      if (wasRunning && !value.running) loadResumable().catch(e => toast(e.message));
+    }
+
+    async function loadResumable() {
+      const data = await api("/api/resumable");
+      resumableRun = data.run;
+      $("resumeBox").classList.toggle("hidden", !resumableRun);
+      if (resumableRun) {
+        $("resumeInfo").textContent = `${resumableRun.profileName}: создано ${resumableRun.success}, ошибок ${resumableRun.failed}, результат неизвестен ${resumableRun.unknown}, осталось ${resumableRun.remaining} из ${resumableRun.total}.`;
+        $("resume").disabled = currentStatus.running || !resumableRun.remaining;
+      }
+    }
+
+    async function poll() {
+      try { renderStatus(await api("/api/status")); } catch (_) {}
+      setTimeout(poll, 700);
+    }
+
+    async function loadProfiles(selectName = "") {
+      const data = await api("/api/profiles");
+      $("profileSelect").innerHTML = `<option value="">Новый профиль</option>` + data.profiles.map(name => `<option>${escapeHtml(name)}</option>`).join("");
+      if (selectName) $("profileSelect").value = selectName;
+      if (!window.initialized) { fillForm(data.default); window.initialized = true; }
+    }
+
+    $("loginEnabled").onchange = toggleLogin; $("addDynamic").onclick = () => addDynamicRow();
+    $("formatBody").onclick = () => { try { $("requestBody").value = JSON.stringify(JSON.parse($("requestBody").value), null, 2); } catch (e) { toast(`JSON: ${e.message}`); } };
+    $("start").onclick = () => startRun(false); $("testOne").onclick = () => startRun(true);
+    $("stop").onclick = async () => { await api("/api/stop", {method:"POST",body:"{}"}); toast("Пауза запрошена"); };
+    $("resume").onclick = async () => {
+      if (!resumableRun || currentStatus.running) return;
+      try {
+        await api("/api/resume", {method:"POST",body:JSON.stringify({file:resumableRun.file, loginPassword:$("loginPassword").value, requestPassword:$("requestPassword").value})});
+        toast("Продолжение запущено");
+      } catch(e) { toast(e.message); }
+    };
+    $("openReports").onclick = () => api("/api/open-reports", {method:"POST",body:"{}"}).catch(e => toast(e.message));
+    $("shutdown").onclick = async () => { if (!confirm("Закрыть iBatcher?")) return; try { await api("/api/shutdown", {method:"POST",body:"{}"}); document.body.innerHTML = '<div style="padding:50px;font:18px Segoe UI">Программа закрыта. Эту вкладку можно закрыть.</div>'; } catch(e) { toast(e.message); } };
+    $("saveProfile").onclick = async () => { try { const cfg = configFromForm(); const data = await api("/api/save-profile", {method:"POST",body:JSON.stringify(cfg)}); await loadProfiles(data.name); toast("Профиль сохранён без паролей"); } catch(e) { toast(e.message); } };
+    $("profileSelect").onchange = async () => { if (!$("profileSelect").value) return; try { fillForm(await api(`/api/profile/${encodeURIComponent($("profileSelect").value)}`)); } catch(e) { toast(e.message); } };
+    $("exportProfile").onclick = () => { try { const cfg = configFromForm(); cfg.login.password = ""; cfg.request.password = ""; const blob = new Blob([JSON.stringify(cfg,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(cfg.profileName||"profile").replace(/[^\wа-яё-]+/gi,"_")+".json"; a.click(); URL.revokeObjectURL(a.href); } catch(e) { toast(e.message); } };
+    $("importProfile").onclick = () => $("importFile").click();
+    $("importFile").onchange = async event => { try { const text = await event.target.files[0].text(); fillForm(JSON.parse(text)); toast("Профиль импортирован; проверьте и сохраните его"); } catch(e) { toast(`Не удалось импортировать: ${e.message}`); } event.target.value=""; };
+
+    loadProfiles().catch(e => toast(e.message)); loadResumable().catch(e => toast(e.message)); poll();
+  </script>
+</body>
+</html>

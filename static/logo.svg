@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="iBatcher">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#3157d5"/>
+      <stop offset="1" stop-color="#7658e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#brand)"/>
+  <g transform="translate(-5 0)">
+    <circle cx="17" cy="19" r="4" fill="#fff"/>
+    <path d="M13 29h8v23h-8z" fill="#fff"/>
+    <path d="M29 13h15c9 0 14 4 14 10 0 4-2 7-6 9 5 2 8 5 8 10 0 7-6 10-16 10H29zm8 7v9h7c4 0 6-2 6-4.5S48 20 44 20zm0 16v9h8c4.5 0 7-1.7 7-4.5S49.5 36 45 36z" fill="#fff" fill-rule="evenodd"/>
+  </g>
+</svg>
