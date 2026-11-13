@@ -33,7 +33,7 @@ def main():
             check=True,
         )
         app = stage / "iBatcher"
-        for name in ("README.txt", "iBatcher.ico", "desktop.ini"):
+        for name in ("iBatcher.ico", "desktop.ini"):
             shutil.copy2(root / name, app / name)
         archive = stage / filename
         subprocess.run(
